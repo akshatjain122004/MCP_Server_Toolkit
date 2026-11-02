@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "chromadb>=1.5.9",
     "httpx>=0.28.1",
     "mcp[cli]>=2.3.0",
     "pydantic>=2.14.2",
@@ -22,6 +23,7 @@ dev = [
     "faker>=40.44.0",
     "pytest>=9.2.0",
     "pytest-asyncio>=1.4.1",
+    "respx>=0.23.1",
 ]
 
 [tool.pytest.ini_options]

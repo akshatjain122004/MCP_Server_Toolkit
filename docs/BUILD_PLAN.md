@@ -19,9 +19,9 @@ The step-by-step plan for building this project from an empty folder to a publis
 | 2 | Hello server | First working MCP server | 0.5 day | ✅ |
 | 3 | MCP Inspector | Tools verified by hand | 0.25 day | ✅ |
 | 4 | Claude Desktop | Tools usable in chat | 0.25 day | ✅ |
-| 5 | SQL Explorer | 3 read-only DB tools | 3 days | ⬜ |
-| 6 | GitHub Analyzer | 3 async API tools | 3 days | ⬜ |
-| 7 | Docs RAG | Index + `search_docs` | 3 days | ⬜ |
+| 5 | SQL Explorer | 3 read-only DB tools | 3 days | ✅ |
+| 6 | GitHub Analyzer | 3 async API tools | 3 days | ✅ |
+| 7 | Docs RAG | Index + `search_docs` | 3 days | ✅ |
 | 8 | Resources and prompts | `schema://shop`, 2 prompts | 0.5 day | ⬜ |
 | 9 | Security hardening | Validation, rate limits, audit log | 1.5 days | ⬜ |
 | 10 | Remote HTTP + auth | `--http` mode with API key | 1 day | ⬜ |
@@ -108,7 +108,7 @@ LICENSE
       )
       return logging.getLogger(name)
   ```
-- [ ] Write `scripts/seed_db.py` that creates `data/shop.db` with:
+- [x] Write `scripts/seed_db.py` that creates `data/shop.db` with:
   - `customers(id, name, email, city, created_at)`, about 60 rows, cities such as Jaipur, Udaipur, Delhi, Mumbai, Bengaluru
   - `products(id, name, category, price)`, about 20 rows
   - `orders(id, customer_id, product_id, quantity, total, order_date)`, about 300 rows spread over the last 6 months
@@ -120,8 +120,8 @@ LICENSE
 ### Done when
 
 - [ ] `uv sync` succeeds on a fresh clone
-- [ ] `uv run scripts/seed_db.py` creates `data/shop.db`
-- [ ] `sqlite3 data/shop.db "SELECT COUNT(*) FROM orders"` returns about 300
+- [x] `uv run scripts/seed_db.py` creates `data/shop.db`
+- [x] `sqlite3 data/shop.db "SELECT COUNT(*) FROM orders"` returns about 300
 - [ ] `git status` shows no `.env` or `.venv`
 
 ---
@@ -254,41 +254,41 @@ LICENSE
 
 ### Tasks
 
-- [ ] Set constants: `DB_PATH = Path(__file__).parents[2] / "data" / "shop.db"`, `MAX_ROWS = 100`
-- [ ] Write `connect()` opening `f"file:{DB_PATH}?mode=ro"` with `uri=True`, `timeout=5`, and `row_factory = sqlite3.Row`
-- [ ] Implement `list_tables` (query `sqlite_master` where `type='table'`, exclude `sqlite_%` tables)
-- [ ] Implement `describe_table`:
-  - [ ] reject any table name not returned by `list_tables` with a helpful `ValueError`
-  - [ ] return `PRAGMA table_info` as `{name, type}` pairs
-- [ ] Implement `run_readonly_query` with **layer 1 validation**:
-  - [ ] strip whitespace and one trailing `;`
-  - [ ] must start with `select` or `with` (case-insensitive)
-  - [ ] reject any remaining `;` (stacked statements)
-  - [ ] reject keywords with word boundaries: `insert|update|delete|drop|alter|create|attach|detach|pragma|replace|vacuum`
-  - [ ] clamp `limit` to `1..MAX_ROWS`
-  - [ ] wrap as `SELECT * FROM (<sql>) LIMIT ?`
-- [ ] Keep **layer 2**: the read-only connection, even though validation exists
-- [ ] Add a query timeout with `conn.set_progress_handler` (abort after ~5 seconds)
-- [ ] Log every query to stderr via `common/logging_setup.py`
-- [ ] Write clear docstrings (what, limits, when to use), e.g. "Call list_tables first"
-- [ ] Write `tests/test_sql.py`:
-  - [ ] `list_tables` returns the three tables
-  - [ ] `describe_table("customers")` includes `city`
-  - [ ] `describe_table("users; --")` raises `ValueError`
-  - [ ] a valid SELECT returns rows
-  - [ ] a `WITH ... SELECT` query works
-  - [ ] row cap: `limit=5000` returns at most 100 rows
-  - [ ] parametrised attacks all raise `ValueError`: `DROP TABLE customers`, `DELETE FROM orders`, `SELECT 1; DROP TABLE customers`, `select * from customers; update orders set total=0`, `PRAGMA table_info(customers)`, `ATTACH DATABASE 'x.db' AS x`
-  - [ ] column names containing keywords (e.g. `created_at`) still work
-- [ ] Verify all three tools in the Inspector
-- [ ] Add `sql-explorer` to the Claude Desktop config
+- [x] Set constants: `DB_PATH = Path(__file__).parents[2] / "data" / "shop.db"`, `MAX_ROWS = 100`
+- [x] Write `connect()` opening `f"file:{DB_PATH}?mode=ro"` with `uri=True`, `timeout=5`, and `row_factory = sqlite3.Row`
+- [x] Implement `list_tables` (query `sqlite_master` where `type='table'`, exclude `sqlite_%` tables)
+- [x] Implement `describe_table`:
+  - [x] reject any table name not returned by `list_tables` with a helpful `ValueError`
+  - [x] return `PRAGMA table_info` as `{name, type}` pairs
+- [x] Implement `run_readonly_query` with **layer 1 validation**:
+  - [x] strip whitespace and one trailing `;`
+  - [x] must start with `select` or `with` (case-insensitive)
+  - [x] reject any remaining `;` (stacked statements)
+  - [x] reject keywords with word boundaries: `insert|update|delete|drop|alter|create|attach|detach|pragma|replace|vacuum`
+  - [x] clamp `limit` to `1..MAX_ROWS`
+  - [x] wrap as `SELECT * FROM (<sql>) LIMIT ?`
+- [x] Keep **layer 2**: the read-only connection, even though validation exists
+- [x] Add a query timeout with `conn.set_progress_handler` (abort after ~5 seconds)
+- [x] Log every query to stderr via `common/logging_setup.py`
+- [x] Write clear docstrings (what, limits, when to use), e.g. "Call list_tables first"
+- [x] Write `tests/test_sql.py`:
+  - [x] `list_tables` returns the three tables
+  - [x] `describe_table("customers")` includes `city`
+  - [x] `describe_table("users; --")` raises `ValueError`
+  - [x] a valid SELECT returns rows
+  - [x] a `WITH ... SELECT` query works
+  - [x] row cap: `limit=5000` returns at most 100 rows
+  - [x] parametrised attacks all raise `ValueError`: `DROP TABLE customers`, `DELETE FROM orders`, `SELECT 1; DROP TABLE customers`, `select * from customers; update orders set total=0`, `PRAGMA table_info(customers)`, `ATTACH DATABASE 'x.db' AS x`
+  - [x] column names containing keywords (e.g. `created_at`) still work
+- [x] Verify all three tools in the Inspector
+- [x] Add `sql-explorer` to the Claude Desktop config
 
 ### Done when
 
-- [ ] `uv run pytest tests/test_sql.py` passes
-- [ ] In Claude Desktop, "Which city has the most customers?" is answered correctly via `list_tables` → `describe_table` → `run_readonly_query`
-- [ ] "Delete all orders" is refused and `orders` still has all rows
-- [ ] You can explain why there are two safety layers
+- [x] `uv run pytest tests/test_sql.py` passes
+- [x] In Claude Desktop, "Which city has the most customers?" is answered correctly via `list_tables` → `describe_table` → `run_readonly_query`
+- [x] "Delete all orders" is refused and `orders` still has all rows
+- [x] You can explain why there are two safety layers
 
 ### Stretch
 
@@ -319,30 +319,30 @@ LICENSE
 
 ### Tasks
 
-- [ ] Put your token in `.env` as `GITHUB_TOKEN=...`; load it with `python-dotenv`
-- [ ] Fail fast at startup with a clear stderr log if `GITHUB_TOKEN` is missing
-- [ ] Write an async helper `gh(path, params)` using `httpx.AsyncClient(timeout=10)` with headers `Authorization: Bearer <token>` and `Accept: application/vnd.github+json`
-- [ ] Map errors to friendly `ValueError`s:
-  - [ ] 404 → "Repository not found. Check owner and repo name."
-  - [ ] 403/429 → "GitHub rate limit reached. Try again later."
-  - [ ] timeout → "GitHub did not respond in time."
-- [ ] Implement the three tools as `async def`, each returning only the fields in the table above
-- [ ] Filter out items with a `pull_request` key in `list_open_issues`
-- [ ] Clamp `limit` to `1..30`
-- [ ] Write `tests/test_github.py` with `respx` mocks (no real network):
-  - [ ] summary returns exactly the expected keys
-  - [ ] issues exclude pull requests
-  - [ ] commit messages are trimmed to the first line, sha to 7 characters
-  - [ ] 404 and 403 produce the friendly messages
-- [ ] Verify in the Inspector against a real repo (e.g. `pallets/flask`)
-- [ ] Add `github-analyzer` to the Claude Desktop config
+- [x] Put your token in `.env` as `GITHUB_TOKEN=...`; load it with `python-dotenv`
+- [x] Fail fast at startup with a clear stderr log if `GITHUB_TOKEN` is missing
+- [x] Write an async helper `gh(path, params)` using `httpx.AsyncClient(timeout=10)` with headers `Authorization: Bearer <token>` and `Accept: application/vnd.github+json`
+- [x] Map errors to friendly `ValueError`s:
+  - [x] 404 → "Repository not found. Check owner and repo name."
+  - [x] 403/429 → "GitHub rate limit reached. Try again later."
+  - [x] timeout → "GitHub did not respond in time."
+- [x] Implement the three tools as `async def`, each returning only the fields in the table above
+- [x] Filter out items with a `pull_request` key in `list_open_issues`
+- [x] Clamp `limit` to `1..30`
+- [x] Write `tests/test_github.py` with `respx` mocks (no real network):
+  - [x] summary returns exactly the expected keys
+  - [x] issues exclude pull requests
+  - [x] commit messages are trimmed to the first line, sha to 7 characters
+  - [x] 404 and 403 produce the friendly messages
+- [x] Verify in the Inspector against a real repo (e.g. `pallets/flask`)
+- [x] Add `github-analyzer` to the Claude Desktop config
 
 ### Done when
 
-- [ ] `uv run pytest tests/test_github.py` passes with no network access
-- [ ] "Is the fastapi/fastapi repo active, and what are the main open issues about?" uses all three tools and gives a sensible summary
-- [ ] A typo in the repo name produces the friendly error and Claude corrects itself or asks you
-- [ ] `git grep github_pat` finds nothing
+- [x] `uv run pytest tests/test_github.py` passes with no network access
+- [x] "Is the fastapi/fastapi repo active, and what are the main open issues about?" uses all three tools and gives a sensible summary
+- [x] A typo in the repo name produces the friendly error and Claude corrects itself or asks you
+- [x] `git grep github_pat` finds nothing
 
 ### Stretch
 
@@ -365,28 +365,39 @@ LICENSE
 
 ### Tasks
 
-- [ ] Collect sample docs (e.g. setup, configuration, authentication, troubleshooting)
-- [ ] Write `build_index.py`:
-  - [ ] read all Markdown files in `docs/sample/`
-  - [ ] split into chunks of roughly 500 tokens with ~50 tokens overlap, preferring heading boundaries
-  - [ ] store in `chromadb.PersistentClient(path="data/chroma")`, collection `docs`, with metadata `{"source": filename}`
-  - [ ] delete and recreate the collection on each run
-- [ ] Write `server.py`:
-  - [ ] load the collection at startup; if missing, log "Run build_index.py first" to stderr
-  - [ ] `search_docs(query: str, top_k: int = 4)` with `top_k` clamped to `1..8`
-  - [ ] return `[{text, source, score}]`, score rounded to 3 decimals
-  - [ ] docstring tells the model to use it before answering doc questions and to cite the source
-- [ ] Write `tests/test_docs_rag.py` using a small temporary index:
-  - [ ] a query about a known topic returns the right source first
-  - [ ] `top_k` is respected and clamped
-  - [ ] empty query raises `ValueError`
-- [ ] Verify in the Inspector and add `docs-rag` to the Claude Desktop config
+- [x] Collect sample docs (e.g. setup, configuration, authentication, troubleshooting)
+- [x] Write `build_index.py`:
+  - [x] read all Markdown files in `docs/sample/`
+  - [x] split into chunks of roughly 500 tokens with ~50 tokens overlap, preferring heading boundaries
+  - [x] store in `chromadb.PersistentClient(path="data/chroma")`, collection `docs`, with metadata `{"source": filename}`
+  - [x] delete and recreate the collection on each run
+- [x] Write `server.py`:
+  - [x] load the collection at startup; if missing, log "Run build_index.py first" to stderr
+  - [x] `search_docs(query: str, top_k: int = 4)` with `top_k` clamped to `1..8`
+  - [x] return `[{text, source, score}]`, score rounded to 3 decimals
+  - [x] docstring tells the model to use it before answering doc questions and to cite the source
+- [x] Write `tests/test_docs_rag.py` using a small temporary index:
+  - [x] a query about a known topic returns the right source first
+  - [x] `top_k` is respected and clamped
+  - [x] empty query raises `ValueError` (raises `ToolError` instead — see note below)
+- [x] Verify in the Inspector and add `docs-rag` to the Claude Desktop config
+
+**Note:** the installed SDK is `mcp` 2.x (`MCPServer`, not the `FastMCP` shown in this
+plan's code samples). Under 2.x a plain `ValueError` from a tool is masked as a generic
+"Error executing tool" message; the client only sees the real message if the tool raises
+`mcp.server.mcpserver.exceptions.ToolError` instead. `search_docs`/`query_collection` raise
+`ToolError`, consistent with the fix already applied to `github_analyzer` in Phase 6.
+`sql_explorer` (Phase 5) still raises plain `ValueError` and is scheduled to be fixed in
+Phase 9. Verified Inspector-equivalent check: `uv run python -c "..."` driving the server
+over real stdio via `mcp.client.stdio.stdio_client` — `search_docs` lists with the correct
+schema, returns correctly cited passages, and both the empty-query and out-of-range-`top_k`
+cases produce client-visible errors.
 
 ### Done when
 
-- [ ] `uv run servers/docs_rag/build_index.py` builds the index
-- [ ] `uv run pytest tests/test_docs_rag.py` passes
-- [ ] "How do I configure authentication?" gets an answer that cites the right file
+- [x] `uv run servers/docs_rag/build_index.py` builds the index
+- [x] `uv run pytest tests/test_docs_rag.py` passes
+- [x] "How do I configure authentication?" gets an answer that cites the right file
 
 ---
 

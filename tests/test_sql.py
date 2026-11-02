@@ -1,0 +1,56 @@
+import pytest
+
+from servers.sql_explorer.server import describe_table, list_tables, run_readonly_query
+
+
+def test_list_tables_returns_the_three_tables():
+    assert set(list_tables()) == {"customers", "products", "orders"}
+
+
+def test_describe_table_includes_city_column():
+    columns = describe_table("customers")
+    assert {"name": "city", "type": "TEXT"} in columns
+
+
+def test_describe_table_rejects_unknown_table_name():
+    with pytest.raises(ValueError):
+        describe_table("users; --")
+
+
+def test_valid_select_returns_rows():
+    rows = run_readonly_query("SELECT * FROM products")
+    assert len(rows) > 0
+
+
+def test_with_query_works():
+    rows = run_readonly_query(
+        "WITH cheap AS (SELECT * FROM products WHERE price < 50) SELECT * FROM cheap"
+    )
+    assert all(row["price"] < 50 for row in rows)
+
+
+def test_row_cap_limits_to_max_rows():
+    rows = run_readonly_query("SELECT * FROM orders", limit=5000)
+    assert len(rows) <= 100
+
+
+def test_keyword_named_column_still_works():
+    rows = run_readonly_query("SELECT created_at FROM customers")
+    assert len(rows) > 0
+    assert "created_at" in rows[0]
+
+
+@pytest.mark.parametrize(
+    "attack_sql",
+    [
+        "DROP TABLE customers",
+        "DELETE FROM orders",
+        "SELECT 1; DROP TABLE customers",
+        "select * from customers; update orders set total=0",
+        "PRAGMA table_info(customers)",
+        "ATTACH DATABASE 'x.db' AS x",
+    ],
+)
+def test_attack_queries_are_rejected(attack_sql):
+    with pytest.raises(ValueError):
+        run_readonly_query(attack_sql)

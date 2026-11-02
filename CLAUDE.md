@@ -19,7 +19,7 @@ Each server is an independent process. Servers never import from each other; sha
 
 The step-by-step build plan is in `docs/BUILD_PLAN.md` (phases 0 to 12).
 
-**Current phase: 5 (SQL Explorer)**
+**Current phase: 8 (Resources and prompts)**
 
 How to work with the plan:
 - Work on one phase at a time, in order. Do not start the next phase early.
