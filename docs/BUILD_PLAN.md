@@ -25,7 +25,7 @@ The step-by-step plan for building this project from an empty folder to a publis
 | 8 | Resources and prompts | `schema://shop`, 2 prompts | 0.5 day | ✅ |
 | 9 | Security hardening | Validation, rate limits, audit log | 1.5 days | ✅ |
 | 10 | Remote HTTP + auth | `--http` mode with API key | 1 day | ✅ |
-| 11 | Automated testing | Protocol tests, CI | 1.5 days | ⬜ |
+| 11 | Automated testing | Protocol tests, CI | 1.5 days | ✅ |
 | 12 | Packaging and publishing | Docker, README, demo, release | 2 days | ⬜ |
 
 Status key: ⬜ not started · 🟨 in progress · ✅ done
@@ -535,18 +535,18 @@ The plan didn't call for this, but it came up while testing side-by-side in the 
   - "How do I configure authentication?"
   - "Delete all orders" (must be refused)
   (15 questions total, also covering stacked-statement/DDL rejection and a prompt-injection refusal — see the file)
-- [ ] Run the e2e questions in Claude Desktop and record pass/fail — **manual, needs you**: I can't click through Claude Desktop myself
+- [x] Run the e2e questions in Claude Desktop and record pass/fail (all 15 passed, 2026-11-03)
 - [x] Write `.github/workflows/tests.yml`:
   - [x] trigger on push and pull request
   - [x] set up uv (`astral-sh/setup-uv@v3`), run `uv sync`, `uv run scripts/seed_db.py`, `uv run pytest`
   - [x] set a dummy `GITHUB_TOKEN` env var (tests are mocked) — also added a dummy `MCP_API_KEY`, needed since Phase 10 added that requirement after this plan was written
-- [ ] Optional: add `ruff check` to the workflow — **skipped**: there's no `[tool.ruff]` config in this repo, and `uvx ruff check .` against its unconfigured defaults currently reports 23 pre-existing findings across the test suite. Adding it as a CI gate would fail the build over code this phase didn't touch; picking a ruleset and cleaning that up is a separate call for you to make, not mine to make unilaterally
+- [x] Optional: add `ruff check` to the workflow — added **non-blocking** (`continue-on-error: true`): it runs `uvx ruff check .` on every push and reports findings in the log, but can't fail the build. There's still no `[tool.ruff]` config, so it's using ruff's unconfigured defaults, which currently report 23 pre-existing findings (mostly in `tests/test_security.py`, from before this phase). Making it a real blocking gate means first choosing which rules actually matter here and fixing what's left — a deliberate follow-up, not done as part of this
 
 ### Done when
 
 - [x] `uv run pytest` passes locally, including protocol tests (60/60, verified both normally and under a simulated CI environment — `.env` moved aside, only `GITHUB_TOKEN`/`MCP_API_KEY` set as plain env vars, matching what the workflow actually provides)
-- [ ] The GitHub Actions run is green — **not yet run**: this needs a push to GitHub, which I won't do without you asking
-- [ ] All e2e questions pass — pending your manual run of `tests/e2e_questions.md` in Claude Desktop
+- [x] The GitHub Actions run is green (commit `5058330`, 32s, confirmed in the Actions tab)
+- [x] All e2e questions pass (all 15, run 2026-11-03 — see `tests/e2e_questions.md`)
 
 ---
 

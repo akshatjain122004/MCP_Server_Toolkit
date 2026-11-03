@@ -1,4 +1,4 @@
-"""Phase 5: SQL explorer server — query the sample shop.db over MCP."""
+"""Phase 5: SQL explorer server — query sample SQLite databases over MCP."""
 
 import re
 import sqlite3
@@ -28,7 +28,22 @@ DEFAULT_HTTP_PORT = 8000
 mcp = MCPServer("sql-explorer")
 logger = get_logger("sql-explorer")
 
-DB_PATH = Path(__file__).parents[2] / "data" / "shop.db"
+_DATA_DIR = Path(__file__).parents[2] / "data"
+
+# Whitelist of databases the model may query by name. Never accept a raw
+# path from the model — only one of these keys.
+DATABASES = {
+    "shop": _DATA_DIR / "shop.db",
+    "inventory": _DATA_DIR / "inventory.db",
+    "hr": _DATA_DIR / "hr.db",
+}
+DEFAULT_DATABASE = "shop"
+
+DatabaseName = Annotated[
+    str,
+    Field(description="Database to query. Call list_databases first to see valid names."),
+]
+
 MAX_ROWS = 100
 QUERY_TIMEOUT_SECONDS = 5
 MAX_SQL_LENGTH = 2000
@@ -42,8 +57,13 @@ _FORBIDDEN_KEYWORDS = re.compile(
 )
 
 
-def connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, timeout=5)
+def connect(database: str) -> sqlite3.Connection:
+    if database not in DATABASES:
+        raise ToolError(
+            f"Unknown database: {database!r}. Call list_databases to see valid names."
+        )
+    db_path = DATABASES[database]
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -64,9 +84,16 @@ def _validate_select(sql: str) -> str:
 
 @mcp.tool()
 @audit(logger)
-def list_tables() -> list[str]:
-    """List every table in the shop database. Call this first to discover what data exists."""
-    conn = connect()
+def list_databases() -> list[str]:
+    """List every database available to query by name. Call this first to pick a database."""
+    return list(DATABASES.keys())
+
+
+@mcp.tool()
+@audit(logger)
+def list_tables(database: DatabaseName = DEFAULT_DATABASE) -> list[str]:
+    """List every table in the given database. Call list_databases first, then this, before querying."""
+    conn = connect(database)
     try:
         rows = conn.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
@@ -78,11 +105,11 @@ def list_tables() -> list[str]:
 
 @mcp.tool()
 @audit(logger)
-def describe_table(table: str) -> list[dict]:
+def describe_table(table: str, database: DatabaseName = DEFAULT_DATABASE) -> list[dict]:
     """List the columns (name and type) of a table. Call list_tables first to get a valid table name."""
-    if table not in list_tables():
+    if table not in list_tables(database):
         raise ToolError(f"Unknown table: {table!r}. Call list_tables first.")
-    conn = connect()
+    conn = connect(database)
     try:
         rows = conn.execute(f"PRAGMA table_info({table})").fetchall()
         return [{"name": row["name"], "type": row["type"]} for row in rows]
@@ -94,17 +121,18 @@ def describe_table(table: str) -> list[dict]:
 @audit(logger)
 def run_readonly_query(
     sql: Annotated[str, Field(max_length=MAX_SQL_LENGTH)],
+    database: DatabaseName = DEFAULT_DATABASE,
     limit: Annotated[int, Field(ge=1, le=MAX_ROWS)] = 50,
 ) -> list[dict]:
-    """Run a single read-only SELECT or WITH query against the shop database and return up to 100 rows.
+    """Run a single read-only SELECT or WITH query against the given database and return up to 100 rows.
 
-    Call list_tables and describe_table first to know what to query.
+    Call list_databases, then list_tables and describe_table, before querying.
     """
     sql_limit.check()
     clamped_limit = max(1, min(limit, MAX_ROWS))
     validated_sql = _validate_select(sql)
 
-    conn = connect()
+    conn = connect(database)
     start = time.monotonic()
     deadline = start + QUERY_TIMEOUT_SECONDS
 
@@ -126,15 +154,31 @@ def run_readonly_query(
         conn.close()
 
 
-@mcp.resource("schema://shop")
-def schema() -> str:
-    """Full schema of the shop database, one table per line: table(col type, col type, ...)."""
+def _schema_for(database: str) -> str:
     lines = []
-    for table in list_tables():
-        columns = describe_table(table)
+    for table in list_tables(database):
+        columns = describe_table(table, database)
         column_list = ", ".join(f"{col['name']} {col['type']}" for col in columns)
         lines.append(f"{table}({column_list})")
     return "\n".join(lines)
+
+
+@mcp.resource("schema://shop")
+def schema_shop() -> str:
+    """Full schema of the shop database, one table per line: table(col type, col type, ...)."""
+    return _schema_for("shop")
+
+
+@mcp.resource("schema://inventory")
+def schema_inventory() -> str:
+    """Full schema of the inventory database, one table per line: table(col type, col type, ...)."""
+    return _schema_for("inventory")
+
+
+@mcp.resource("schema://hr")
+def schema_hr() -> str:
+    """Full schema of the hr database, one table per line: table(col type, col type, ...)."""
+    return _schema_for("hr")
 
 
 @mcp.prompt()

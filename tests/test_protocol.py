@@ -40,7 +40,7 @@ async def test_sql_explorer_lists_expected_tools():
             await session.initialize()
             tools = await session.list_tools()
             names = {tool.name for tool in tools.tools}
-            assert names == {"list_tables", "describe_table", "run_readonly_query"}
+            assert names == {"list_databases", "list_tables", "describe_table", "run_readonly_query"}
 
 
 @pytest.mark.asyncio

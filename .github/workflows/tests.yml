@@ -26,3 +26,7 @@ jobs:
 
       - name: Run tests
         run: uv run pytest
+
+      - name: Lint (informational — does not fail the build)
+        run: uvx ruff check .
+        continue-on-error: true
