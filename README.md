@@ -2,10 +2,10 @@
 
 **Secure Model Context Protocol servers that give AI assistants safe, read-only access to databases, GitHub and your documentation.**
 
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/python-3.14%2B-blue)
 ![MCP](https://img.shields.io/badge/protocol-MCP-6ea8ff)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://github.com/<your-username>/mcp-toolkit/actions/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/akshatjain122004/MCP_Server_Toolkit/actions/workflows/tests.yml/badge.svg)
 
 <!-- Replace with your demo recording -->
 ![Demo](docs/demo.gif)
@@ -41,13 +41,13 @@ This toolkit implements three such servers, with a focus on **safety**: every to
 
 | Server | What it does | Tools |
 | --- | --- | --- |
-| **SQL Explorer** | Lets the model explore and query a SQLite database in read-only mode | `list_tables`, `describe_table`, `run_readonly_query` |
+| **SQL Explorer** | Lets the model explore and query a whitelisted set of SQLite databases (`shop`, `inventory`, `hr`) in read-only mode | `list_databases`, `list_tables`, `describe_table`, `run_readonly_query` |
 | **GitHub Analyzer** | Summarises public repositories, issues and commits | `get_repo_summary`, `list_open_issues`, `recent_commits` |
 | **Docs RAG** | Semantic search over your documentation, returning passages with sources | `search_docs` |
 
 Also included:
 
-- **Resource:** `schema://shop` exposes the full database schema as context.
+- **Resources:** `schema://shop`, `schema://inventory`, `schema://hr` expose each database's full schema as context.
 - **Prompts:** `sales_report(month)` and `analyse_repo(owner, repo)` templates.
 
 ## How it works
@@ -87,7 +87,7 @@ The model does the thinking (which tool, what SQL). The server does the safe exe
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.14+ (`uv` will install it automatically if missing)
 - [uv](https://docs.astral.sh/uv/)
 - Node.js (only for MCP Inspector)
 - [Claude Desktop](https://claude.ai/download)
@@ -95,8 +95,8 @@ The model does the thinking (which tool, what SQL). The server does the safe exe
 ### Install
 
 ```bash
-git clone https://github.com/<your-username>/mcp-toolkit.git
-cd mcp-toolkit
+git clone https://github.com/akshatjain122004/MCP_Server_Toolkit.git
+cd MCP_Server_Toolkit
 uv sync
 cp .env.example .env        # then add your GitHub token
 ```
@@ -112,6 +112,8 @@ MCP_API_KEY=change-me              # only needed for HTTP mode
 
 ```bash
 uv run scripts/seed_db.py                  # creates data/shop.db with fake data
+uv run scripts/seed_inventory.py           # creates data/inventory.db with fake data
+uv run scripts/seed_hr.py                  # creates data/hr.db with fake data
 uv run servers/docs_rag/build_index.py     # builds the docs vector index
 ```
 
@@ -154,7 +156,8 @@ Fully quit and reopen Claude Desktop. The tools appear under the tools icon in t
 
 | You ask | What happens |
 | --- | --- |
-| "Which 5 customers spent the most in October?" | `describe_table` → `run_readonly_query` with a GROUP BY → ranked answer |
+| "Which 5 customers spent the most in October?" | `list_databases` → `describe_table` → `run_readonly_query` with a GROUP BY → ranked answer |
+| "Which warehouse has the most stock of item X?" | `list_databases` picks `inventory` → `describe_table` → `run_readonly_query` |
 | "Is the fastapi repo active, and what are people complaining about?" | `get_repo_summary` + `recent_commits` + `list_open_issues` → combined summary |
 | "How do I configure authentication in this project?" | `search_docs` → answer with steps and cited source files |
 | "Delete all orders." | Refused: only single `SELECT` statements are allowed and the connection is read-only |
@@ -256,5 +259,5 @@ MIT. See [LICENSE](LICENSE).
 
 **Akshat Jain**, B.Tech in AI & Data Science, College of Technology and Engineering, Udaipur
 
-- GitHub: [@akshatjain122004](https://github.com/akshatajain122004)
-- LinkedIn: [akshatajain122004](https://linkedin.com/in/akshatajain122004)
+- GitHub: [@akshatjain122004](https://github.com/akshatjain122004)
+- LinkedIn: [akshatjain122004](https://linkedin.com/in/akshatjain122004)

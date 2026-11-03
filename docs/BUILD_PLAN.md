@@ -26,7 +26,7 @@ The step-by-step plan for building this project from an empty folder to a publis
 | 9 | Security hardening | Validation, rate limits, audit log | 1.5 days | ✅ |
 | 10 | Remote HTTP + auth | `--http` mode with API key | 1 day | ✅ |
 | 11 | Automated testing | Protocol tests, CI | 1.5 days | ✅ |
-| 12 | Packaging and publishing | Docker, README, demo, release | 2 days | ⬜ |
+| 12 | Packaging and publishing | Docker, README, demo, release | 2 days | 🟨 |
 
 Status key: ⬜ not started · 🟨 in progress · ✅ done
 
@@ -562,7 +562,7 @@ The plan didn't call for this, but it came up while testing side-by-side in the 
 
 ### Tasks
 
-- [ ] Write a Dockerfile per server:
+- [x] Write a Dockerfile per server:
   ```dockerfile
   FROM python:3.12-slim
   RUN pip install uv
@@ -572,15 +572,15 @@ The plan didn't call for this, but it came up while testing side-by-side in the 
   EXPOSE 8000
   CMD ["uv", "run", "servers/sql_explorer/server.py", "--http"]
   ```
-- [ ] Build and run each image with `--env-file .env`; confirm the HTTP endpoint works
-- [ ] Add a `.dockerignore` (`.venv`, `.env`, `data/chroma`, `.git`)
-- [ ] Update `README.md`:
-  - [ ] replace `<your-username>` and `<your-profile>` placeholders
-  - [ ] confirm every command in the README actually works on a fresh clone
-  - [ ] confirm the tools table matches the real tool names
+- [x] Build and run each image with `--env-file .env`; confirm the HTTP endpoint works (all three images built on `python:3.14-slim`; each run standalone with `--env-file .env`, confirmed a request without the API key gets 401, and confirmed end-to-end over the real MCP streamable-HTTP protocol with the correct key: `sql_explorer` → `list_tables`, `github_analyzer` → `get_repo_summary` against the real `pallets/flask` repo, `docs_rag` → `search_docs` returning a correctly cited passage)
+- [x] Add a `.dockerignore` (`.venv`, `.env`, `data/chroma`, `.git`)
+- [x] Update `README.md`:
+  - [x] replace `<your-username>` and `<your-profile>` placeholders (real values from `git remote`: `akshatjain122004/MCP_Server_Toolkit`; also fixed a pre-existing typo in the Author section's GitHub/LinkedIn links, and corrected the Python version badge/prerequisite from a stale "3.10+" to the actual `>=3.14` in `pyproject.toml`/`.python-version`)
+  - [x] confirm every command in the README actually works on a fresh clone (tool/resource/prompt names cross-checked against the real `server.py` files; `uv run pytest` passes, 67/67; not run from a literal fresh `git clone` in this pass)
+  - [x] confirm the tools table matches the real tool names
 - [ ] Record a 2-minute demo (OBS): one question per server, then "Delete all orders" being refused
 - [ ] Convert a short clip to `docs/demo.gif` and upload the full video to YouTube or LinkedIn
-- [ ] Final review: `git grep -i token`, no secrets, no debug prints
+- [x] Final review: `git grep -i token`, no secrets, no debug prints (clean: no leaked tokens/keys, no stray `print()` in `servers/` or `common/`)
 - [ ] Tag a release `v1.0.0` on GitHub
 - [ ] Optional: publish to PyPI so servers run with `uvx`
 - [ ] Write a LinkedIn post about one lesson (e.g. two-layer SQL safety)

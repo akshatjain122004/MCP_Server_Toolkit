@@ -19,7 +19,7 @@ Each server is an independent process. Servers never import from each other; sha
 
 The step-by-step build plan is in `docs/BUILD_PLAN.md` (phases 0 to 12).
 
-**Current phase: 11 (Automated testing and CI)**
+**Current phase: 12 (Packaging, documentation and publishing)**
 
 How to work with the plan:
 - Work on one phase at a time, in order. Do not start the next phase early.
@@ -63,7 +63,7 @@ mcp-toolkit/
 
 ## Tech stack
 
-- Python 3.10+ managed with **uv** (do not use pip or create venvs manually)
+- Python 3.14+ managed with **uv** (do not use pip or create venvs manually)
 - `mcp[cli]` (FastMCP), `pydantic`, `httpx` (async), `python-dotenv`, `chromadb`
 - Dev: `pytest`, `pytest-asyncio`, `respx` or `pytest-httpx`
 - Optional HTTP mode: `uvicorn`, `starlette` middleware
