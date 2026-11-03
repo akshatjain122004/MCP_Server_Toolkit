@@ -5,6 +5,7 @@ from mcp.server.mcpserver.exceptions import ToolError
 
 from servers.github_analyzer.server import (
     GITHUB_API_BASE,
+    analyse_repo,
     get_repo_summary,
     list_open_issues,
     recent_commits,
@@ -138,3 +139,11 @@ async def test_403_produces_friendly_rate_limit_message():
     )
     with pytest.raises(ToolError, match="rate limit"):
         await get_repo_summary("pallets", "flask")
+
+
+def test_analyse_repo_prompt_mentions_the_repo_and_asks():
+    result = analyse_repo("pallets", "flask")
+    assert "pallets/flask" in result
+    assert "activity level" in result.lower()
+    assert "issue" in result.lower()
+    assert "health" in result.lower()

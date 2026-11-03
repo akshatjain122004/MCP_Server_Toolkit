@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Annotated
 
 import chromadb
+import uvicorn
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import Field
@@ -19,7 +20,11 @@ _PROJECT_ROOT = str(Path(__file__).parents[2])
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-from common.logging_setup import get_logger  # noqa: E402
+from common.auth import ApiKeyMiddleware, require_api_key  # noqa: E402
+from common.cli import http_port  # noqa: E402
+from common.logging_setup import audit, get_logger  # noqa: E402
+
+DEFAULT_HTTP_PORT = 8002
 
 mcp = MCPServer("docs-rag")
 logger = get_logger("docs-rag")
@@ -27,6 +32,7 @@ logger = get_logger("docs-rag")
 CHROMA_PATH = Path(__file__).parents[2] / "data" / "chroma"
 COLLECTION_NAME = "docs"
 MAX_TOP_K = 8
+MAX_QUERY_LENGTH = 500
 
 
 def _load_collection():
@@ -64,8 +70,9 @@ def query_collection(collection, query: str, top_k: int = 4) -> list[dict]:
 
 
 @mcp.tool()
+@audit(logger)
 def search_docs(
-    query: str,
+    query: Annotated[str, Field(max_length=MAX_QUERY_LENGTH)],
     top_k: Annotated[int, Field(ge=1, le=MAX_TOP_K)] = 4,
 ) -> list[dict]:
     """Semantically search the project documentation and return the most relevant passages.
@@ -79,4 +86,10 @@ def search_docs(
 
 
 if __name__ == "__main__":
-    mcp.run()
+    if "--http" in sys.argv:
+        require_api_key()
+        app = mcp.streamable_http_app()
+        app.add_middleware(ApiKeyMiddleware)
+        uvicorn.run(app, host="0.0.0.0", port=http_port(DEFAULT_HTTP_PORT))
+    else:
+        mcp.run()

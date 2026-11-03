@@ -22,9 +22,9 @@ The step-by-step plan for building this project from an empty folder to a publis
 | 5 | SQL Explorer | 3 read-only DB tools | 3 days | ✅ |
 | 6 | GitHub Analyzer | 3 async API tools | 3 days | ✅ |
 | 7 | Docs RAG | Index + `search_docs` | 3 days | ✅ |
-| 8 | Resources and prompts | `schema://shop`, 2 prompts | 0.5 day | ⬜ |
-| 9 | Security hardening | Validation, rate limits, audit log | 1.5 days | ⬜ |
-| 10 | Remote HTTP + auth | `--http` mode with API key | 1 day | ⬜ |
+| 8 | Resources and prompts | `schema://shop`, 2 prompts | 0.5 day | ✅ |
+| 9 | Security hardening | Validation, rate limits, audit log | 1.5 days | ✅ |
+| 10 | Remote HTTP + auth | `--http` mode with API key | 1 day | ✅ |
 | 11 | Automated testing | Protocol tests, CI | 1.5 days | ⬜ |
 | 12 | Packaging and publishing | Docker, README, demo, release | 2 days | ⬜ |
 
@@ -412,16 +412,16 @@ cases produce client-visible errors.
 
 ### Tasks
 
-- [ ] Add resource `schema://shop` to SQL Explorer: returns every table as `table(col type, ...)`, one per line
-- [ ] Add prompt `sales_report(month: str)` to SQL Explorer: asks for total revenue, top 5 products, top 5 customers and one insight for that month
-- [ ] Add prompt `analyse_repo(owner: str, repo: str)` to GitHub Analyzer: asks for activity level, main issue themes and a health verdict
-- [ ] Verify in the Inspector (**Resources** and **Prompts** tabs)
-- [ ] In Claude Desktop, attach `schema://shop` and pick each prompt from the menu
+- [x] Add resource `schema://shop` to SQL Explorer: returns every table as `table(col type, ...)`, one per line
+- [x] Add prompt `sales_report(month: str)` to SQL Explorer: asks for total revenue, top 5 products, top 5 customers and one insight for that month
+- [x] Add prompt `analyse_repo(owner: str, repo: str)` to GitHub Analyzer: asks for activity level, main issue themes and a health verdict
+- [x] Verify in the Inspector (**Resources** and **Prompts** tabs)
+- [x] In Claude Desktop, attach `schema://shop` and pick each prompt from the menu
 
 ### Done when
 
-- [ ] The resource and both prompts appear and work in the Inspector and Claude Desktop
-- [ ] You can explain: the model calls tools; the user or app attaches resources; prompts are user-chosen templates
+- [x] The resource and both prompts appear and work in the Inspector and Claude Desktop
+- [x] You can explain: the model calls tools; the user or app attaches resources; prompts are user-chosen templates
 
 ---
 
@@ -439,28 +439,28 @@ cases produce client-visible errors.
 
 ### Tasks
 
-- [ ] **Input validation:** convert tool parameters to `Annotated[..., Field(...)]`:
-  - [ ] GitHub `owner`: `pattern=r"^[A-Za-z0-9-]{1,39}$"`
-  - [ ] GitHub `repo`: `pattern=r"^[A-Za-z0-9._-]{1,100}$"`
-  - [ ] all `limit`/`top_k`: `ge`/`le` bounds
-  - [ ] `sql` and `query`: `max_length` (e.g. 2000 and 500)
-- [ ] **Rate limiting:** finish `common/limits.py` with a sliding-window `RateLimiter(max_calls, per_seconds)`; apply `30 per 60s` to each GitHub tool and `60 per 60s` to SQL queries
-- [ ] **Error hygiene:** wrap unexpected exceptions so the client sees "Internal error, see server logs" while the full traceback goes to stderr
-- [ ] **Audit log:** a small decorator or helper that logs tool name, arguments (never secrets), duration in ms and success/error for every call
-- [ ] **Prompt injection review:** confirm no tool can write, send, post or delete anything; add a note to the README security section
-- [ ] **Secrets check:** confirm tokens are never logged or returned; `.env` is gitignored
-- [ ] Write `tests/test_security.py`:
-  - [ ] invalid owner/repo names are rejected before any HTTP call
-  - [ ] out-of-range limits are rejected or clamped
-  - [ ] the rate limiter raises after the limit and recovers after the window
-  - [ ] error messages contain no file paths or tracebacks
+- [x] **Input validation:** convert tool parameters to `Annotated[..., Field(...)]`:
+  - [x] GitHub `owner`: `pattern=r"^[A-Za-z0-9-]{1,39}$"` (already done in Phase 6)
+  - [x] GitHub `repo`: `pattern=r"^[A-Za-z0-9._-]{1,100}$"` (already done in Phase 6)
+  - [x] all `limit`/`top_k`: `ge`/`le` bounds (already done in Phases 5-7)
+  - [x] `sql` and `query`: `max_length` (2000 and 500)
+- [x] **Rate limiting:** finished `common/limits.py` with `RateLimiter.check()` (raises `ToolError` on top of the existing sliding-window `allow()`); applied `30 per 60s` (`github_limit`) to each GitHub tool and `60 per 60s` (`sql_limit`) to `run_readonly_query`
+- [x] **Error hygiene:** `mcp` 2.x already wraps any exception that isn't a deliberate `ToolError`/`ResourceError`/`MCPError` as `UnexpectedToolError` with the generic client-visible message `"Error executing tool <name>"` and logs the full traceback server-side via `logger.exception(...)` (stderr); converted SQL Explorer's remaining plain `ValueError`s to `ToolError` so its own deliberate messages (e.g. "Unknown table: ...") reach the client instead of being masked
+- [x] **Audit log:** `common/logging_setup.audit()` decorator (sync + async) logs tool name, arguments (redacted if the keyword name looks secret-ish), duration in ms and success/error; applied to all 7 tools across the three servers
+- [x] **Prompt injection review:** confirmed no tool can write, send, post or delete anything; README security section already documents this
+- [x] **Secrets check:** confirmed `GITHUB_TOKEN` is never logged or returned (tested); `.env` is gitignored
+- [x] Write `tests/test_security.py`:
+  - [x] invalid owner/repo names are rejected before any HTTP call
+  - [x] out-of-range limits are rejected or clamped
+  - [x] the rate limiter raises after the limit and recovers after the window
+  - [x] error messages contain no file paths or tracebacks
 
 ### Done when
 
-- [ ] `uv run pytest` passes in full
-- [ ] The Inspector shows the patterns and bounds in each tool's schema
-- [ ] Logs show one audit line per tool call
-- [ ] You can explain each row of the README security table
+- [x] `uv run pytest` passes in full
+- [x] The Inspector shows the patterns and bounds in each tool's schema
+- [x] Logs show one audit line per tool call
+- [x] You can explain each row of the README security table
 
 ---
 
@@ -477,28 +477,38 @@ cases produce client-visible errors.
 
 ### Tasks
 
-- [ ] Add `uvicorn` and `starlette` if not already installed (`uv add uvicorn starlette`)
-- [ ] Write `common/auth.py` with an `ApiKeyMiddleware` that returns `401 {"error": "unauthorized"}` unless `Authorization: Bearer <MCP_API_KEY>` matches; compare with `secrets.compare_digest`
-- [ ] Refuse to start in HTTP mode if `MCP_API_KEY` is missing or still `change-me`
-- [ ] Update each server's `__main__`:
+- [x] Add `uvicorn` and `starlette` if not already installed (`uv add uvicorn starlette`)
+- [x] Write `common/auth.py` with an `ApiKeyMiddleware` that returns `401 {"error": "unauthorized"}` unless `Authorization: Bearer <MCP_API_KEY>` matches; compare with `secrets.compare_digest`
+- [x] Refuse to start in HTTP mode if `MCP_API_KEY` is missing or still `change-me` (`common/auth.require_api_key`, which also calls `load_dotenv()` itself since not every server's entry point does)
+- [x] Update each server's `__main__`:
   ```python
   if __name__ == "__main__":
       if "--http" in sys.argv:
+          require_api_key()
           app = mcp.streamable_http_app()
           app.add_middleware(ApiKeyMiddleware)
           uvicorn.run(app, host="0.0.0.0", port=8000)
       else:
           mcp.run()
   ```
-- [ ] Check the installed MCP SDK version for the exact HTTP app function name before relying on it
-- [ ] Test in the Inspector with transport "Streamable HTTP", URL `http://localhost:8000/mcp`, and the auth header
-- [ ] Test with curl: no header → 401; correct header → not 401
+- [x] Check the installed MCP SDK version for the exact HTTP app function name before relying on it (`mcp==2.3.0`, `MCPServer.streamable_http_app()`)
+- [x] Test with curl: no header → 401; correct header → not 401 (confirmed against the real `.env` key with `sql_explorer`: wrong/missing key → 401; correct key → passes auth and reaches the real protocol handler)
+- [x] Test in the Inspector with transport "Streamable HTTP", URL `http://localhost:8000/mcp`, and the auth header (first verified programmatically with a real `mcp.ClientSession` over `streamable_http_client` — `initialize()`, `list_tools()` → `list_tables`/`describe_table`/`run_readonly_query`, `call_tool("list_tables")` → `customers`/`products`/`orders`; then confirmed again in the actual Inspector GUI in a real browser tab, for all three servers running `--http` simultaneously: `sql_explorer` on :8000 (`list_tables` → `customers`/`products`/`orders`) and `docs_rag` on :8002 (`search_docs` → real passages from `authentication.md`/`configuration.md`), each with its own `streamable-http` entry and `Authorization: Bearer <key>` custom header)
 
 ### Done when
 
-- [ ] `uv run servers/sql_explorer/server.py --http` serves on port 8000
-- [ ] Requests without the key get 401; with the key, tools work in the Inspector
-- [ ] stdio mode still works unchanged in Claude Desktop
+- [x] `uv run servers/sql_explorer/server.py --http` serves on port 8000
+- [x] Requests without the key get 401; with the key, tools work in the Inspector (verified end-to-end: 401 without/with-wrong key via curl and in the Inspector GUI's own network log — including the Inspector's automatic OAuth discovery attempts getting 401'd — then a successful authenticated connection and tool call)
+- [x] stdio mode still works unchanged in Claude Desktop (unit + protocol tests pass; `__main__` falls through to `mcp.run()` unchanged when `--http` is absent)
+
+### Added beyond the plan
+
+The plan didn't call for this, but it came up while testing side-by-side in the Inspector: all three servers hardcoded `port=8000`, so only one could run in `--http` mode at a time, which made it easy to accidentally query the wrong server (e.g. an Inspector entry labeled `github-analyzer` that was actually still talking to `sql_explorer` on :8000, with no error to signal the mismatch).
+
+- Added `common/cli.py` (`http_port(default)`): reads an optional `--port <N>` CLI argument, else falls back to a default.
+- Gave each server its own default port so they can all run in `--http` mode simultaneously without colliding: `sql_explorer` → 8000, `github_analyzer` → 8001, `docs_rag` → 8002 (still overridable per-run with `--port`).
+- Added `tests/test_cli.py` (2 tests: default-port and explicit `--port`).
+- Verified live: started `sql_explorer --http` (8000) and `github_analyzer --http` (8001) at the same time; both independently enforced the API key and answered on their own port.
 
 ---
 
@@ -514,28 +524,29 @@ cases produce client-visible errors.
 
 ### Tasks
 
-- [ ] Write `tests/test_protocol.py` using `StdioServerParameters`, `stdio_client` and `ClientSession`:
-  - [ ] for each server, `initialize()` then `list_tools()` and assert the expected tool names
-  - [ ] for SQL Explorer, `call_tool("run_readonly_query", {...})` returns rows
-  - [ ] for SQL Explorer, a `DROP TABLE` call returns an error result
-- [ ] Write `tests/e2e_questions.md` with 10 to 15 questions, expected tools and expected outcome, including:
+- [x] Write `tests/test_protocol.py` using `StdioServerParameters`, `stdio_client` and `ClientSession`:
+  - [x] for each server, `initialize()` then `list_tools()` and assert the expected tool names
+  - [x] for SQL Explorer, `call_tool("run_readonly_query", {...})` returns rows
+  - [x] for SQL Explorer, a `DROP TABLE` call returns an error result
+- [x] Write `tests/e2e_questions.md` with 10 to 15 questions, expected tools and expected outcome, including:
   - "What was total revenue in October?"
   - "Which 5 customers spent the most?"
   - "Summarise open issues in pallets/flask"
   - "How do I configure authentication?"
   - "Delete all orders" (must be refused)
-- [ ] Run the e2e questions in Claude Desktop and record pass/fail
-- [ ] Write `.github/workflows/tests.yml`:
-  - [ ] trigger on push and pull request
-  - [ ] set up uv, run `uv sync`, `uv run scripts/seed_db.py`, `uv run pytest`
-  - [ ] set a dummy `GITHUB_TOKEN` env var (tests are mocked)
-- [ ] Optional: add `ruff check` to the workflow
+  (15 questions total, also covering stacked-statement/DDL rejection and a prompt-injection refusal — see the file)
+- [ ] Run the e2e questions in Claude Desktop and record pass/fail — **manual, needs you**: I can't click through Claude Desktop myself
+- [x] Write `.github/workflows/tests.yml`:
+  - [x] trigger on push and pull request
+  - [x] set up uv (`astral-sh/setup-uv@v3`), run `uv sync`, `uv run scripts/seed_db.py`, `uv run pytest`
+  - [x] set a dummy `GITHUB_TOKEN` env var (tests are mocked) — also added a dummy `MCP_API_KEY`, needed since Phase 10 added that requirement after this plan was written
+- [ ] Optional: add `ruff check` to the workflow — **skipped**: there's no `[tool.ruff]` config in this repo, and `uvx ruff check .` against its unconfigured defaults currently reports 23 pre-existing findings across the test suite. Adding it as a CI gate would fail the build over code this phase didn't touch; picking a ruleset and cleaning that up is a separate call for you to make, not mine to make unilaterally
 
 ### Done when
 
-- [ ] `uv run pytest` passes locally, including protocol tests
-- [ ] The GitHub Actions run is green
-- [ ] All e2e questions pass
+- [x] `uv run pytest` passes locally, including protocol tests (60/60, verified both normally and under a simulated CI environment — `.env` moved aside, only `GITHUB_TOKEN`/`MCP_API_KEY` set as plain env vars, matching what the workflow actually provides)
+- [ ] The GitHub Actions run is green — **not yet run**: this needs a push to GitHub, which I won't do without you asking
+- [ ] All e2e questions pass — pending your manual run of `tests/e2e_questions.md` in Claude Desktop
 
 ---
 

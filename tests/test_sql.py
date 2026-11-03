@@ -1,6 +1,13 @@
 import pytest
+from mcp.server.mcpserver.exceptions import ToolError
 
-from servers.sql_explorer.server import describe_table, list_tables, run_readonly_query
+from servers.sql_explorer.server import (
+    describe_table,
+    list_tables,
+    run_readonly_query,
+    sales_report,
+    schema,
+)
 
 
 def test_list_tables_returns_the_three_tables():
@@ -13,7 +20,7 @@ def test_describe_table_includes_city_column():
 
 
 def test_describe_table_rejects_unknown_table_name():
-    with pytest.raises(ValueError):
+    with pytest.raises(ToolError):
         describe_table("users; --")
 
 
@@ -52,5 +59,21 @@ def test_keyword_named_column_still_works():
     ],
 )
 def test_attack_queries_are_rejected(attack_sql):
-    with pytest.raises(ValueError):
+    with pytest.raises(ToolError):
         run_readonly_query(attack_sql)
+
+
+def test_schema_resource_lists_every_table_with_columns():
+    result = schema()
+    assert "customers(" in result
+    assert "products(" in result
+    assert "orders(" in result
+    assert "city TEXT" in result
+
+
+def test_sales_report_prompt_mentions_the_month_and_asks():
+    result = sales_report("2026-03")
+    assert "2026-03" in result
+    assert "revenue" in result.lower()
+    assert "top 5 products" in result.lower()
+    assert "top 5 customers" in result.lower()

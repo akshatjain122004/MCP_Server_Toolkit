@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: dummy-token-tests-are-mocked
+      MCP_API_KEY: dummy-key-tests-are-mocked
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Seed the sample database
+        run: uv run scripts/seed_db.py
+
+      - name: Run tests
+        run: uv run pytest

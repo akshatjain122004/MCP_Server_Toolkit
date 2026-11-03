@@ -19,7 +19,7 @@ Each server is an independent process. Servers never import from each other; sha
 
 The step-by-step build plan is in `docs/BUILD_PLAN.md` (phases 0 to 12).
 
-**Current phase: 8 (Resources and prompts)**
+**Current phase: 11 (Automated testing and CI)**
 
 How to work with the plan:
 - Work on one phase at a time, in order. Do not start the next phase early.
@@ -42,7 +42,9 @@ mcp-toolkit/
 │       └── build_index.py      # run once to build the Chroma index
 ├── common/
 │   ├── logging_setup.py        # stderr logging
-│   └── limits.py               # RateLimiter, timeouts
+│   ├── limits.py               # RateLimiter, timeouts
+│   ├── auth.py                 # ApiKeyMiddleware, require_api_key (--http mode)
+│   └── cli.py                  # http_port(default): optional --port override
 ├── data/
 │   ├── shop.db                 # sample SQLite DB (fake data only)
 │   └── chroma/                 # generated vector index (gitignored)
@@ -132,7 +134,8 @@ Create `servers/<name>/server.py` with `FastMCP("<name>")`, reuse `common/` for 
 ## Transports
 
 - Default is stdio: `mcp.run()`.
-- Remote mode: `mcp.streamable_http_app()` wrapped with the API-key middleware, served by uvicorn on port 8000. Never run HTTP mode without the auth middleware. OAuth 2.1 is the production path and is out of scope for now.
+- Remote mode (`--http`): `mcp.streamable_http_app()` wrapped with `ApiKeyMiddleware`, served by uvicorn. Never run HTTP mode without the auth middleware. OAuth 2.1 is the production path and is out of scope for now.
+- Each server has its own default `--http` port so they can run at once without colliding: `sql_explorer` 8000, `github_analyzer` 8001, `docs_rag` 8002. Override with `--port <N>` (`common/cli.http_port`).
 - MCP SDK APIs change between versions. Before using an SDK function you are unsure of, check the installed version's source or the official MCP Python SDK README rather than guessing.
 
 ## Testing layers
