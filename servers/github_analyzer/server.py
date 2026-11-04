@@ -150,7 +150,7 @@ if __name__ == "__main__":
         sys.exit(1)
     if "--http" in sys.argv:
         require_api_key()
-        app = mcp.streamable_http_app()
+        app = mcp.streamable_http_app(host="0.0.0.0")
         app.add_middleware(ApiKeyMiddleware)
         uvicorn.run(app, host="0.0.0.0", port=http_port(DEFAULT_HTTP_PORT))
     else:
