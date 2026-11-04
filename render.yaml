@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: mcp-sql-explorer
+    env: docker
+    dockerfilePath: ./servers/sql_explorer/Dockerfile
+    dockerContext: .
+    dockerCommand: uv run servers/sql_explorer/server.py --http --port $PORT
+    plan: free
+    envVars:
+      - key: MCP_API_KEY
+        sync: false
+
+  - type: web
+    name: mcp-github-analyzer
+    env: docker
+    dockerfilePath: ./servers/github_analyzer/Dockerfile
+    dockerContext: .
+    dockerCommand: uv run servers/github_analyzer/server.py --http --port $PORT
+    plan: free
+    envVars:
+      - key: MCP_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+
+  - type: web
+    name: mcp-docs-rag
+    env: docker
+    dockerfilePath: ./servers/docs_rag/Dockerfile
+    dockerContext: .
+    dockerCommand: uv run servers/docs_rag/server.py --http --port $PORT
+    plan: free
+    envVars:
+      - key: MCP_API_KEY
+        sync: false
